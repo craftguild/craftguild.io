@@ -61,7 +61,10 @@ const formatStars = (stars: number | null | undefined): string => {
                   <article class="contents">
                     <div class="flex flex-col gap-4">
                       <div class="flex flex-col gap-1">
-                        <h2 class="text-2xl font-semibold text-slate-800">{project.name}</h2>
+                        <h2 class="text-2xl font-semibold text-slate-800">
+                          <span class="sm:hidden">{project.shortName}</span>
+                          <span class="hidden sm:inline">{project.name}</span>
+                        </h2>
                         <p class="break-all text-sm leading-6 text-slate-400">
                           {project.link}
                         </p>

@@ -8,6 +8,7 @@ export type LanguageIcon = Readonly<{
 
 export type Project = Readonly<{
   name: string;
+  shortName: string;
   link: `https://${string}`;
   summary: string;
   tags: readonly string[];
@@ -17,6 +18,7 @@ export type Project = Readonly<{
 export const projects = [
   {
     name: 'craftguild/jscalendar.ts',
+    shortName: 'jscalendar.ts',
     link: 'https://github.com/craftguild/jscalendar.ts',
     summary:
       'A practical TypeScript toolkit for RFC 8984 (JSCalendar) data. It supports creation, patching, recurrence expansion, search, and iCalendar export while keeping the API close to Event, Task, and Group objects.',
