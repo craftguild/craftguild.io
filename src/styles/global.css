@@ -1,0 +1,14 @@
+@import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Fira Code", "SFMono-Regular", Consolas, "Liberation Mono", Menlo,
+    monospace;
+}
+
+@layer base {
+  html {
+    color: #17201c;
+    background: #f7f8f4;
+  }
+}

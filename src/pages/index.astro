@@ -1,0 +1,100 @@
+---
+import '../styles/global.css';
+
+type Project = Readonly<{
+  name: string;
+  link: `https://${string}`;
+  summary: string;
+  tags: readonly string[];
+}>;
+
+const projects = [
+  {
+    name: 'craftguild/jscalendar.ts',
+    link: 'https://github.com/craftguild/jscalendar.ts',
+    summary:
+      'A practical TypeScript toolkit for working with RFC 8984 (JSCalendar) data. It supports creation, patching, recurrence expansion, search, and iCalendar export while staying close to the spec. The API focuses on Event, Task, and Group objects, with strict validation by default. Builder helpers improve developer experience without hiding the underlying JSCalendar model.',
+    tags: ['RFC 8984', 'JSCalendar', 'TypeScript'],
+  },
+] satisfies readonly Project[];
+
+const projectCount = projects.length;
+const pageMaxWidthClass = projectCount <= 2 ? 'max-w-3xl' : 'max-w-5xl';
+const projectGridClass =
+  projectCount === 1
+    ? 'grid-cols-1'
+    : projectCount === 2
+      ? 'sm:grid-cols-2'
+      : 'sm:grid-cols-2 lg:grid-cols-3';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta
+      name="description"
+      content="A showroom for open source software published by Craft Guild."
+    />
+    <title>Craft Guild</title>
+  </head>
+  <body class="min-h-screen bg-slate-50 text-slate-800 antialiased">
+    <main class="min-h-screen px-6">
+      <div class:list={['mx-auto flex min-h-screen w-full flex-col', pageMaxWidthClass]}>
+        <header class="py-16 text-center">
+          <h1 id="page-title" class="text-3xl font-bold tracking-normal sm:text-4xl">
+            Craft Guild
+          </h1>
+        </header>
+
+        <section class="flex-1 py-0" aria-labelledby="page-title">
+          <div class:list={['grid items-start gap-5', projectGridClass]}>
+            {
+              projects.map((project) => (
+                <a
+                  href={project.link}
+                  target="_blank"
+                  rel="noreferrer"
+                  class="flex flex-col gap-8 rounded-lg bg-white p-6 shadow-sm transition-shadow duration-200 hover:shadow-md focus:outline-none"
+                >
+                  <article class="contents">
+                    <div class="flex flex-col gap-4">
+                      <div class="flex flex-col gap-1">
+                        <h2 class="text-2xl font-semibold text-slate-800">{project.name}</h2>
+                        <p class="break-all text-sm leading-6 text-slate-400">
+                          {project.link}
+                        </p>
+                      </div>
+                      <p class="text-sm leading-6 text-slate-800">
+                        {project.summary}
+                      </p>
+                    </div>
+                    <ul class="flex flex-wrap gap-2" aria-label={`${project.name} tags`}>
+                      {project.tags.map((tag) => (
+                        <li class="rounded-md bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-800">
+                          {tag}
+                        </li>
+                      ))}
+                    </ul>
+                  </article>
+                </a>
+              ))
+            }
+          </div>
+        </section>
+
+        <footer class="py-16 text-center text-sm text-slate-800">
+          <a
+            href="https://progressiveworks.co"
+            target="_blank"
+            rel="noreferrer"
+            class="transition-opacity duration-200 hover:opacity-75 focus:outline-none focus:ring-2 focus:ring-[#d84f3f] focus:ring-offset-2 focus:ring-offset-slate-50"
+          >
+            progressiveworks.co
+          </a>
+        </footer>
+      </div>
+    </main>
+  </body>
+</html>
