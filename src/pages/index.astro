@@ -1,22 +1,8 @@
 ---
 import '../styles/global.css';
-
-type Project = Readonly<{
-  name: string;
-  link: `https://${string}`;
-  summary: string;
-  tags: readonly string[];
-}>;
-
-const projects = [
-  {
-    name: 'craftguild/jscalendar.ts',
-    link: 'https://github.com/craftguild/jscalendar.ts',
-    summary:
-      'A practical TypeScript toolkit for working with RFC 8984 (JSCalendar) data. It supports creation, patching, recurrence expansion, search, and iCalendar export while staying close to the spec. The API focuses on Event, Task, and Group objects, with strict validation by default. Builder helpers improve developer experience without hiding the underlying JSCalendar model.',
-    tags: ['RFC 8984', 'JSCalendar', 'TypeScript'],
-  },
-] satisfies readonly Project[];
+import { HiStar } from 'react-icons/hi';
+import { projects } from '../data/projects';
+import { getGitHubStarCounts } from '../lib/github-stars';
 
 const projectCount = projects.length;
 const pageMaxWidthClass = projectCount <= 2 ? 'max-w-3xl' : 'max-w-5xl';
@@ -26,6 +12,19 @@ const projectGridClass =
     : projectCount === 2
       ? 'sm:grid-cols-2'
       : 'sm:grid-cols-2 lg:grid-cols-3';
+
+const starCounts = await getGitHubStarCounts();
+
+const formatStars = (stars: number | null | undefined): string => {
+  if (typeof stars !== 'number') {
+    return '-';
+  }
+
+  return new Intl.NumberFormat('en', {
+    notation: stars >= 1000 ? 'compact' : 'standard',
+    maximumFractionDigits: 1,
+  }).format(stars);
+};
 ---
 
 <html lang="en">
@@ -54,9 +53,10 @@ const projectGridClass =
               projects.map((project) => (
                 <a
                   href={project.link}
+                  data-repository={new URL(project.link).pathname.slice(1)}
                   target="_blank"
                   rel="noreferrer"
-                  class="flex flex-col gap-8 rounded-lg bg-white p-6 shadow-sm transition-shadow duration-200 hover:shadow-md focus:outline-none"
+                  class="flex flex-col gap-8 rounded-lg bg-white px-6 py-5 shadow-sm transition-shadow duration-200 hover:shadow-md focus:outline-none"
                 >
                   <article class="contents">
                     <div class="flex flex-col gap-4">
@@ -70,13 +70,42 @@ const projectGridClass =
                         {project.summary}
                       </p>
                     </div>
-                    <ul class="flex flex-wrap gap-2" aria-label={`${project.name} tags`}>
-                      {project.tags.map((tag) => (
-                        <li class="rounded-md bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-800">
-                          {tag}
-                        </li>
-                      ))}
-                    </ul>
+                    <div class="flex items-end justify-between gap-4">
+                      <div class="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+                        <ul class="flex items-center gap-2" aria-label={`${project.name} languages`}>
+                          {project.languageIcons.map((icon) => (
+                            <li class="flex h-6 items-center">
+                              <svg
+                                viewBox="0 0 24 24"
+                                role="img"
+                                aria-label={icon.title}
+                                class="size-4"
+                                style={`fill: #${icon.hex}`}
+                              >
+                                <path d={icon.path} />
+                              </svg>
+                            </li>
+                          ))}
+                        </ul>
+                        <span class="h-5 w-px bg-slate-200" aria-hidden="true" />
+                        <ul class="flex flex-wrap gap-2" aria-label={`${project.name} tags`}>
+                          {project.tags.map((tag) => (
+                            <li class="flex h-6 shrink-0 items-center rounded-md bg-slate-50 px-2.5 text-xs font-medium leading-none text-slate-800">
+                              {tag}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <p
+                        class="flex h-6 shrink-0 items-center text-xs font-medium leading-none text-slate-400"
+                        aria-label={`${project.name} GitHub stars`}
+                      >
+                        <HiStar className="mr-1 size-4" aria-hidden="true" />
+                        <span>
+                          {formatStars(starCounts[new URL(project.link).pathname.slice(1)])}
+                        </span>
+                      </p>
+                    </div>
                   </article>
                 </a>
               ))
