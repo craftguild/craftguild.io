@@ -95,8 +95,8 @@ const formatLatestReleaseTag = (tag: string | null | undefined): string => tag ?
                             {project.summary}
                           </p>
                         </div>
-                    <div class="flex items-center gap-3">
-                      <div class="flex shrink-0 items-center gap-2">
+                    <div class="flex items-center gap-2">
+                      <div class="flex shrink-0 items-center gap-3">
                         <ul class="flex items-center gap-2" aria-label={`${project.name} languages`}>
                           <li class="flex h-6 items-center">
                             {
@@ -122,7 +122,7 @@ const formatLatestReleaseTag = (tag: string | null | undefined): string => tag ?
                           )
                         }
                       </div>
-                      <div class="relative -ml-1 min-w-0 flex-1">
+                      <div class="relative ml-0 min-w-0 flex-1">
                         <TagScroller
                           label={`${project.name} tags`}
                           tags={project.tags}
