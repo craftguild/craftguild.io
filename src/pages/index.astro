@@ -1,19 +1,22 @@
 ---
 import '../styles/global.css';
-import { HiStar, HiTag } from 'react-icons/hi';
-import { projects } from '../data/projects';
-import { getGitHubRepositoryMetadata } from '../lib/github-repositories';
+import { HiOutlineCubeTransparent, HiStar, HiTag } from 'react-icons/hi';
+import { siteSettings } from '../data/site-settings';
+import { getGitHubRepositoryCards } from '../lib/github-repositories';
+
+const projectsResult = await getGitHubRepositoryCards();
+const projects = projectsResult.repositories;
+const isGitHubUnavailable = !projectsResult.isAvailable;
 
 const projectCount = projects.length;
-const pageMaxWidthClass = projectCount <= 2 ? 'max-w-3xl' : 'max-w-5xl';
+const pageMaxWidthClass =
+  projectCount === 1 ? 'max-w-3xl' : projectCount === 2 ? 'max-w-4xl' : 'max-w-5xl';
 const projectGridClass =
   projectCount === 1
     ? 'grid-cols-1'
     : projectCount === 2
       ? 'sm:grid-cols-2'
       : 'sm:grid-cols-2 lg:grid-cols-3';
-
-const repositoryMetadata = await getGitHubRepositoryMetadata();
 
 const formatStars = (stars: number | null | undefined): string => {
   if (typeof stars !== 'number') {
@@ -38,107 +41,141 @@ const formatLatestReleaseTag = (tag: string | null | undefined): string => tag ?
       name="description"
       content="A showroom for open source software published by Craft Guild."
     />
-    <title>Craft Guild</title>
+    <title>{siteSettings.headerLabel}</title>
   </head>
   <body class="min-h-screen bg-slate-50 text-slate-800 antialiased">
     <main class="min-h-screen px-6">
       <div class:list={['mx-auto flex min-h-screen w-full flex-col', pageMaxWidthClass]}>
         <header class="py-16 text-center">
           <h1 id="page-title" class="text-3xl font-bold tracking-normal sm:text-4xl">
-            Craft Guild
+            {siteSettings.headerLabel}
           </h1>
         </header>
 
         <section class="flex-1 py-0" aria-labelledby="page-title">
-          <div class:list={['grid items-start gap-5', projectGridClass]}>
-            {
-              projects.map((project) => (
-                <a
-                  href={project.link}
-                  data-repository={new URL(project.link).pathname.slice(1)}
-                  target="_blank"
-                  rel="noreferrer"
-                  class="flex flex-col gap-8 rounded-lg bg-white px-6 py-5 shadow-sm transition-shadow duration-200 hover:shadow-md focus:outline-none"
-                >
-                  <article class="contents">
-                    <div class="flex flex-col gap-4">
-                      <div class="flex flex-col gap-1">
+          {
+            isGitHubUnavailable ? (
+              <div class="flex flex-col items-center gap-4 py-16 text-center text-slate-400">
+                <HiOutlineCubeTransparent className="size-20" aria-hidden="true" />
+                <div class="flex flex-col gap-1 text-sm leading-5">
+                  <p>GitHub repository data is temporarily unavailable</p>
+                  <p>Please visit again later</p>
+                </div>
+                {
+                  projectsResult.errorMessage && (
+                    <p class="max-w-xl break-words text-sm leading-5 text-slate-400">
+                      {projectsResult.errorMessage}
+                    </p>
+                  )
+                }
+              </div>
+            ) : (
+              <div class:list={['grid items-start gap-5', projectGridClass]}>
+                {
+                  projects.map((project) => (
+                    <a
+                      href={project.link}
+                      data-repository={new URL(project.link).pathname.slice(1)}
+                      target="_blank"
+                      rel="noreferrer"
+                      class="flex flex-col gap-8 rounded-lg bg-white px-6 py-5 shadow-sm transition-shadow duration-200 hover:shadow-md focus:outline-none"
+                    >
+                      <article class="contents">
+                        <div class="flex flex-col gap-4">
+                          <div class="flex flex-col gap-1">
                         <h2 class="text-2xl font-semibold text-slate-800">
-                          <span class="sm:hidden">{project.shortName}</span>
-                          <span class="hidden sm:inline">{project.name}</span>
+                          {project.shortName}
                         </h2>
-                        <p class="break-all text-sm leading-6 text-slate-400">
-                          {project.link}
-                        </p>
+                            <p class="break-all text-sm leading-6 text-slate-400">
+                              {project.link}
+                            </p>
+                          </div>
+                          <p class="text-sm leading-6 text-slate-800">
+                            {project.summary}
+                          </p>
+                        </div>
+                    <div class="flex items-center gap-3">
+                      <div class="flex shrink-0 items-center gap-2">
+                        {
+                          project.languageIcon && (
+                            <ul class="flex items-center gap-2" aria-label={`${project.name} languages`}>
+                                  <li class="flex h-6 items-center">
+                                    <svg
+                                      viewBox="0 0 24 24"
+                                      role="img"
+                                      aria-label={project.languageIcon.title}
+                                      class="size-4"
+                                      style={`fill: #${project.languageIcon.hex}`}
+                                    >
+                                      <path d={project.languageIcon.path} />
+                                    </svg>
+                                  </li>
+                                </ul>
+                          )
+                        }
+                        {
+                          project.languageIcon && project.tags.length > 0 && (
+                            <span class="h-5 w-px bg-slate-200" aria-hidden="true" />
+                          )
+                        }
                       </div>
-                      <p class="text-sm leading-6 text-slate-800">
-                        {project.summary}
-                      </p>
-                    </div>
-                    <div class="flex items-end justify-between gap-4">
-                      <div class="flex min-w-0 flex-1 flex-wrap items-center gap-3">
-                        <ul class="flex items-center gap-2" aria-label={`${project.name} languages`}>
-                          {project.languageIcons.map((icon) => (
-                            <li class="flex h-6 items-center">
-                              <svg
-                                viewBox="0 0 24 24"
-                                role="img"
-                                aria-label={icon.title}
-                                class="size-4"
-                                style={`fill: #${icon.hex}`}
+                      <div class="relative -ml-1 min-w-0 flex-1">
+                        {
+                          project.tags.length > 0 && (
+                            <>
+                              <span
+                                class="pointer-events-none absolute inset-y-0 left-0 z-10 w-2 bg-gradient-to-r from-white to-transparent"
+                                aria-hidden="true"
+                              />
+                              <ul
+                                class="flex gap-2 overflow-x-auto pl-1 pr-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                                aria-label={`${project.name} tags`}
                               >
-                                <path d={icon.path} />
-                              </svg>
-                            </li>
-                          ))}
-                        </ul>
-                        <span class="h-5 w-px bg-slate-200" aria-hidden="true" />
-                        <ul class="flex flex-wrap gap-2" aria-label={`${project.name} tags`}>
-                          {project.tags.map((tag) => (
-                            <li class="flex h-6 shrink-0 items-center rounded-md bg-slate-50 px-2.5 text-xs font-medium leading-none text-slate-800">
-                              {tag}
-                            </li>
-                          ))}
-                        </ul>
+                              {project.tags.map((tag) => (
+                                <li class="flex h-6 shrink-0 items-center rounded-md bg-slate-50 px-2.5 text-xs font-medium leading-none text-slate-800">
+                                  {tag}
+                                </li>
+                              ))}
+                              </ul>
+                              <span
+                                class="pointer-events-none absolute inset-y-0 right-0 z-10 w-2 bg-gradient-to-l from-white to-transparent"
+                                aria-hidden="true"
+                              />
+                            </>
+                          )
+                        }
                       </div>
                       <p
-                        class="flex h-6 shrink-0 items-center gap-3 text-xs font-medium leading-none text-slate-400"
-                        aria-label={`${project.name} latest release and GitHub stars`}
-                      >
-                        <span class="flex items-center">
-                          <HiTag className="mr-1 size-4" aria-hidden="true" />
-                          {
-                            formatLatestReleaseTag(
-                              repositoryMetadata[new URL(project.link).pathname.slice(1)]
-                                ?.latestReleaseTag,
-                            )
-                          }
-                        </span>
-                        <span class="flex items-center">
-                          <HiStar className="mr-1 size-4" aria-hidden="true" />
-                          {
-                            formatStars(
-                              repositoryMetadata[new URL(project.link).pathname.slice(1)]?.stars,
-                            )
-                          }
-                        </span>
-                      </p>
-                    </div>
-                  </article>
-                </a>
-              ))
-            }
-          </div>
+                            class="flex h-6 shrink-0 items-center gap-3 text-xs font-medium leading-none text-slate-400"
+                            aria-label={`${project.name} latest release and GitHub stars`}
+                          >
+                            <span class="flex items-center">
+                              <HiTag className="mr-1 size-4" aria-hidden="true" />
+                              {formatLatestReleaseTag(project.latestReleaseTag)}
+                            </span>
+                            <span class="flex items-center">
+                              <HiStar className="mr-1 size-4" aria-hidden="true" />
+                              {formatStars(project.stars)}
+                            </span>
+                          </p>
+                        </div>
+                      </article>
+                    </a>
+                  ))
+                }
+              </div>
+            )
+          }
         </section>
 
         <footer class="py-16 text-center text-sm text-slate-800">
           <a
-            href="https://progressiveworks.co"
+            href={siteSettings.footerUrl}
             target="_blank"
             rel="noreferrer"
             class="transition-opacity duration-200 hover:opacity-75 focus:outline-none"
           >
-            progressiveworks.co
+            {siteSettings.footerLabel}
           </a>
         </footer>
       </div>
