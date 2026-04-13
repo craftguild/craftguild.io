@@ -63,3 +63,5 @@ The endpoint requires:
 ```http
 Authorization: Bearer <CRON_SECRET>
 ```
+
+Note: The repository cache is currently stored in memory. On Vercel, this cache is scoped to the runtime instance that handles a request. A cron refresh can warm the cache for the instance that executes the cron job, but it should not be treated as a global cache warm-up across all regions or instances.
