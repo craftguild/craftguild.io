@@ -1,8 +1,8 @@
 ---
 import '../styles/global.css';
-import { HiStar } from 'react-icons/hi';
+import { HiStar, HiTag } from 'react-icons/hi';
 import { projects } from '../data/projects';
-import { getGitHubStarCounts } from '../lib/github-stars';
+import { getGitHubRepositoryMetadata } from '../lib/github-repositories';
 
 const projectCount = projects.length;
 const pageMaxWidthClass = projectCount <= 2 ? 'max-w-3xl' : 'max-w-5xl';
@@ -13,7 +13,7 @@ const projectGridClass =
       ? 'sm:grid-cols-2'
       : 'sm:grid-cols-2 lg:grid-cols-3';
 
-const starCounts = await getGitHubStarCounts();
+const repositoryMetadata = await getGitHubRepositoryMetadata();
 
 const formatStars = (stars: number | null | undefined): string => {
   if (typeof stars !== 'number') {
@@ -25,6 +25,8 @@ const formatStars = (stars: number | null | undefined): string => {
     maximumFractionDigits: 1,
   }).format(stars);
 };
+
+const formatLatestReleaseTag = (tag: string | null | undefined): string => tag ?? '-';
 ---
 
 <html lang="en">
@@ -100,12 +102,25 @@ const formatStars = (stars: number | null | undefined): string => {
                         </ul>
                       </div>
                       <p
-                        class="flex h-6 shrink-0 items-center text-xs font-medium leading-none text-slate-400"
-                        aria-label={`${project.name} GitHub stars`}
+                        class="flex h-6 shrink-0 items-center gap-3 text-xs font-medium leading-none text-slate-400"
+                        aria-label={`${project.name} latest release and GitHub stars`}
                       >
-                        <HiStar className="mr-1 size-4" aria-hidden="true" />
-                        <span>
-                          {formatStars(starCounts[new URL(project.link).pathname.slice(1)])}
+                        <span class="flex items-center">
+                          <HiTag className="mr-1 size-4" aria-hidden="true" />
+                          {
+                            formatLatestReleaseTag(
+                              repositoryMetadata[new URL(project.link).pathname.slice(1)]
+                                ?.latestReleaseTag,
+                            )
+                          }
+                        </span>
+                        <span class="flex items-center">
+                          <HiStar className="mr-1 size-4" aria-hidden="true" />
+                          {
+                            formatStars(
+                              repositoryMetadata[new URL(project.link).pathname.slice(1)]?.stars,
+                            )
+                          }
                         </span>
                       </p>
                     </div>
