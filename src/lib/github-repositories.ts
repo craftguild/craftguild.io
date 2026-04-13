@@ -290,15 +290,20 @@ const toRepositoryCard = async (
 
 const fetchLatestReleaseTag = async (
   repositoryPath: string,
-): Promise<GitHubFetchResult<string>> => {
-  const release = await fetchGitHubJson<GitHubRelease>(`repos/${repositoryPath}/releases/latest`);
+): Promise<GitHubFetchResult<string | null>> => {
+  const release = await fetchGitHubJson<GitHubRelease | null>(
+    `repos/${repositoryPath}/releases/latest`,
+    {
+      fallbackData: null,
+    },
+  );
 
   if (isGitHubFetchFailure(release)) {
     return release;
   }
 
   return {
-    data: release.data.tag_name,
+    data: release.data?.tag_name ?? null,
     error: null,
   };
 };
@@ -306,12 +311,22 @@ const fetchLatestReleaseTag = async (
 const fetchDominantLanguageIcon = async (
   repositoryPath: string,
 ): Promise<GitHubFetchResult<LanguageIcon | null>> => {
-  const languages = await fetchGitHubJson<Record<string, number>>(
+  const languages = await fetchGitHubJson<Record<string, number> | null>(
     `repos/${repositoryPath}/languages`,
+    {
+      fallbackData: null,
+    },
   );
 
   if (isGitHubFetchFailure(languages)) {
     return languages;
+  }
+
+  if (!languages.data) {
+    return {
+      data: null,
+      error: null,
+    };
   }
 
   const dominantLanguage = Object.entries(languages.data).sort(([, a], [, b]) => b - a)[0]?.[0];
@@ -329,7 +344,12 @@ const fetchDominantLanguageIcon = async (
   };
 };
 
-const fetchGitHubJson = async <T>(path: string): Promise<GitHubFetchResult<T>> => {
+const fetchGitHubJson = async <T>(
+  path: string,
+  options: Readonly<{
+    fallbackData?: T;
+  }> = {},
+): Promise<GitHubFetchResult<T>> => {
   const abortController = new AbortController();
   const timeoutId = setTimeout(() => abortController.abort(), GITHUB_API_TIMEOUT_MS);
 
@@ -350,6 +370,13 @@ const fetchGitHubJson = async <T>(path: string): Promise<GitHubFetchResult<T>> =
     });
 
     if (!response.ok) {
+      if ('fallbackData' in options) {
+        return {
+          data: options.fallbackData as T,
+          error: null,
+        };
+      }
+
       return {
         data: null,
         error: await formatGitHubResponseError(response),
@@ -361,6 +388,13 @@ const fetchGitHubJson = async <T>(path: string): Promise<GitHubFetchResult<T>> =
       error: null,
     };
   } catch (error) {
+    if ('fallbackData' in options) {
+      return {
+        data: options.fallbackData as T,
+        error: null,
+      };
+    }
+
     return {
       data: null,
       error: error instanceof Error ? error.message : 'GitHub API request failed',

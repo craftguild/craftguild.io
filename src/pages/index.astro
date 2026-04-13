@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-import { HiOutlineCubeTransparent, HiStar, HiTag } from 'react-icons/hi';
+import { HiCode, HiOutlineCubeTransparent, HiStar, HiTag } from 'react-icons/hi';
 import { siteSettings } from '../data/site-settings';
 import { getGitHubRepositoryCards } from '../lib/github-repositories';
 
@@ -96,25 +96,27 @@ const formatLatestReleaseTag = (tag: string | null | undefined): string => tag ?
                         </div>
                     <div class="flex items-center gap-3">
                       <div class="flex shrink-0 items-center gap-2">
+                        <ul class="flex items-center gap-2" aria-label={`${project.name} languages`}>
+                          <li class="flex h-6 items-center">
+                            {
+                              project.languageIcon ? (
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  role="img"
+                                  aria-label={project.languageIcon.title}
+                                  class="size-4"
+                                  style={`fill: #${project.languageIcon.hex}`}
+                                >
+                                  <path d={project.languageIcon.path} />
+                                </svg>
+                              ) : (
+                                <HiCode className="size-4 text-slate-400" aria-label="Code" />
+                              )
+                            }
+                          </li>
+                        </ul>
                         {
-                          project.languageIcon && (
-                            <ul class="flex items-center gap-2" aria-label={`${project.name} languages`}>
-                                  <li class="flex h-6 items-center">
-                                    <svg
-                                      viewBox="0 0 24 24"
-                                      role="img"
-                                      aria-label={project.languageIcon.title}
-                                      class="size-4"
-                                      style={`fill: #${project.languageIcon.hex}`}
-                                    >
-                                      <path d={project.languageIcon.path} />
-                                    </svg>
-                                  </li>
-                                </ul>
-                          )
-                        }
-                        {
-                          project.languageIcon && project.tags.length > 0 && (
+                          project.tags.length > 0 && (
                             <span class="h-5 w-px bg-slate-200" aria-hidden="true" />
                           )
                         }
