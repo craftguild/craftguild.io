@@ -9,15 +9,8 @@ const projectsResult = await getGitHubRepositoryCards();
 const projects = projectsResult.repositories;
 const isGitHubUnavailable = !projectsResult.isAvailable;
 
-const projectCount = projects.length;
-const pageMaxWidthClass =
-  projectCount === 1 ? 'max-w-3xl' : projectCount === 2 ? 'max-w-4xl' : 'max-w-5xl';
-const projectGridClass =
-  projectCount === 1
-    ? 'grid-cols-1'
-    : projectCount === 2
-      ? 'sm:grid-cols-2'
-      : 'sm:grid-cols-2 lg:grid-cols-3';
+const pageMaxWidthClass = 'max-w-3xl';
+const projectGridClass = 'grid-cols-1';
 
 const formatStars = (stars: number | null | undefined): string => {
   if (typeof stars !== 'number') {
@@ -30,7 +23,7 @@ const formatStars = (stars: number | null | undefined): string => {
   }).format(stars);
 };
 
-const formatLatestReleaseTag = (tag: string | null | undefined): string => tag ?? '-';
+const formatLatestTag = (tag: string | null | undefined): string => tag ?? '-';
 ---
 
 <html lang="en">
@@ -131,11 +124,11 @@ const formatLatestReleaseTag = (tag: string | null | undefined): string => tag ?
                       </div>
                       <p
                             class="flex h-6 shrink-0 items-center gap-3 text-xs font-medium leading-none text-slate-400"
-                            aria-label={`${project.name} latest release and GitHub stars`}
+                            aria-label={`${project.name} latest tag and GitHub stars`}
                           >
                             <span class="flex items-center">
                               <HiTag className="mr-1 size-4" aria-hidden="true" />
-                              {formatLatestReleaseTag(project.latestReleaseTag)}
+                              {formatLatestTag(project.latestTag)}
                             </span>
                             <span class="flex items-center">
                               <HiStar className="mr-1 size-4" aria-hidden="true" />

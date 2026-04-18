@@ -24,10 +24,15 @@ type GitHubRepository = Readonly<{
   name: string;
   stargazers_count: number;
   topics?: readonly string[];
+  updated_at: string;
 }>;
 
-type GitHubRelease = Readonly<{
-  tag_name: string;
+type GitHubTagRef = Readonly<{
+  ref: string;
+  object: {
+    sha: string;
+    type: string;
+  };
 }>;
 
 type GitHubError = Readonly<{
@@ -47,6 +52,13 @@ type GitHubFetchResult<T> = Readonly<
 
 type GitHubFetchFailure = Extract<GitHubFetchResult<unknown>, { data: null }>;
 
+type SemverVersion = Readonly<{
+  major: number;
+  minor: number;
+  patch: number;
+  prerelease: readonly string[];
+}>;
+
 export type LanguageIcon = Readonly<{
   title: string;
   path: string;
@@ -61,7 +73,7 @@ export type GitHubRepositoryCard = Readonly<{
   tags: readonly string[];
   languageIcon: LanguageIcon | null;
   stars: number;
-  latestReleaseTag: string | null;
+  latestTag: string | null;
 }>;
 
 export type GitHubRepositoryCardsResult = Readonly<
@@ -87,6 +99,8 @@ const CACHE_TTL_MS = 25 * 60 * 60 * 1000;
 const GITHUB_API_TIMEOUT_MS = 500;
 const MAX_REPOSITORIES = 100;
 const MAX_PAGES_PER_ORGANIZATION = 10;
+const SEMVER_TAG_PATTERN =
+  /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 
 const languageIconByGitHubLanguage: Partial<Record<string, SimpleIcon>> = {
   Astro: siAstro,
@@ -195,7 +209,7 @@ const fetchGitHubRepositoryCards = async (): Promise<{
         !repository.fork &&
         !repository.is_template,
     )
-    .sort((a, b) => b.stargazers_count - a.stargazers_count)
+    .sort(compareRepositoriesForDisplay)
     .slice(0, MAX_REPOSITORIES);
 
   const repositoryCardResults = await Promise.all(repositories.map(toRepositoryCard));
@@ -251,18 +265,31 @@ const fetchOrganizationRepositories = async (
   };
 };
 
+const compareRepositoriesForDisplay = (
+  a: GitHubRepository,
+  b: GitHubRepository,
+): number => {
+  const starDifference = b.stargazers_count - a.stargazers_count;
+
+  if (starDifference !== 0) {
+    return starDifference;
+  }
+
+  return Date.parse(b.updated_at) - Date.parse(a.updated_at);
+};
+
 const toRepositoryCard = async (
   repository: GitHubRepository,
 ): Promise<RepositoryCardResult> => {
-  const [latestReleaseTagResult, languageIconResult] = await Promise.all([
-    fetchLatestReleaseTag(repository.full_name),
+  const [latestTagResult, languageIconResult] = await Promise.all([
+    fetchLatestAnnotatedTag(repository.full_name),
     fetchDominantLanguageIcon(repository.full_name),
   ]);
 
-  if (isGitHubFetchFailure(latestReleaseTagResult)) {
+  if (isGitHubFetchFailure(latestTagResult)) {
     return {
       repositoryCard: null,
-      error: latestReleaseTagResult.error,
+      error: latestTagResult.error,
     };
   }
 
@@ -282,30 +309,134 @@ const toRepositoryCard = async (
       tags: repository.topics ?? [],
       languageIcon: languageIconResult.data,
       stars: repository.stargazers_count,
-      latestReleaseTag: latestReleaseTagResult.data,
+      latestTag: latestTagResult.data,
     },
     error: null,
   };
 };
 
-const fetchLatestReleaseTag = async (
+const fetchLatestAnnotatedTag = async (
   repositoryPath: string,
 ): Promise<GitHubFetchResult<string | null>> => {
-  const release = await fetchGitHubJson<GitHubRelease | null>(
-    `repos/${repositoryPath}/releases/latest`,
+  const tagRefs = await fetchGitHubJson<GitHubTagRef[]>(
+    `repos/${repositoryPath}/git/matching-refs/tags`,
     {
-      fallbackData: null,
+      fallbackData: [],
     },
   );
 
-  if (isGitHubFetchFailure(release)) {
-    return release;
+  if (isGitHubFetchFailure(tagRefs)) {
+    return tagRefs;
+  }
+
+  const annotatedTagRefs = tagRefs.data.filter((tagRef) => tagRef.object.type === 'tag');
+
+  if (annotatedTagRefs.length === 0) {
+    return {
+      data: null,
+      error: null,
+    };
+  }
+
+  const semverTagRef = annotatedTagRefs
+    .map((tagRef) => ({
+      name: formatGitHubTagRefName(tagRef.ref),
+      version: parseSemverTag(formatGitHubTagRefName(tagRef.ref)),
+    }))
+    .filter((tag): tag is { name: string; version: SemverVersion } => tag.version !== null)
+    .sort((a, b) => compareSemverVersions(b.version, a.version))[0];
+
+  if (semverTagRef) {
+    return {
+      data: semverTagRef.name,
+      error: null,
+    };
   }
 
   return {
-    data: release.data?.tag_name ?? null,
+    data: null,
     error: null,
   };
+};
+
+const formatGitHubTagRefName = (ref: string): string => ref.replace(/^refs\/tags\//, '');
+
+const parseSemverTag = (tag: string): SemverVersion | null => {
+  const match = tag.match(SEMVER_TAG_PATTERN);
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    major: Number(match[1]),
+    minor: Number(match[2]),
+    patch: Number(match[3]),
+    prerelease: match[4]?.split('.') ?? [],
+  };
+};
+
+const compareSemverVersions = (a: SemverVersion, b: SemverVersion): number => {
+  const stableVersionDifference =
+    a.major - b.major || a.minor - b.minor || a.patch - b.patch;
+
+  if (stableVersionDifference !== 0) {
+    return stableVersionDifference;
+  }
+
+  if (a.prerelease.length === 0 && b.prerelease.length === 0) {
+    return 0;
+  }
+
+  if (a.prerelease.length === 0) {
+    return 1;
+  }
+
+  if (b.prerelease.length === 0) {
+    return -1;
+  }
+
+  const maxPrereleaseLength = Math.max(a.prerelease.length, b.prerelease.length);
+
+  for (let index = 0; index < maxPrereleaseLength; index += 1) {
+    const aIdentifier = a.prerelease[index];
+    const bIdentifier = b.prerelease[index];
+
+    if (aIdentifier === undefined) {
+      return -1;
+    }
+
+    if (bIdentifier === undefined) {
+      return 1;
+    }
+
+    const identifierDifference = compareSemverPrereleaseIdentifiers(aIdentifier, bIdentifier);
+
+    if (identifierDifference !== 0) {
+      return identifierDifference;
+    }
+  }
+
+  return 0;
+};
+
+const compareSemverPrereleaseIdentifiers = (a: string, b: string): number => {
+  const aIsNumeric = /^\d+$/.test(a);
+  const bIsNumeric = /^\d+$/.test(b);
+
+  if (aIsNumeric && bIsNumeric) {
+    return Number(a) - Number(b);
+  }
+
+  if (aIsNumeric) {
+    return -1;
+  }
+
+  if (bIsNumeric) {
+    return 1;
+  }
+
+  return a.localeCompare(b, 'en');
 };
 
 const fetchDominantLanguageIcon = async (

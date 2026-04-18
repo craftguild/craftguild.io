@@ -2,7 +2,7 @@
 
 craftguild.io is a small Astro site that lists public open source repositories from the Craft Guild GitHub organization.
 
-Repository cards are built from GitHub data, including repository descriptions, topics, stars, latest releases, and dominant language icons. The site is designed for deployment on Vercel with server-side rendering, a small in-memory cache, and a cron endpoint for refreshing GitHub repository data.
+Repository cards are built from GitHub data, including repository descriptions, topics, stars, annotated tags, and dominant language icons. The site is designed for deployment on Vercel with server-side rendering, a small in-memory cache, and a cron endpoint for refreshing GitHub repository data.
 
 ## Development
 
