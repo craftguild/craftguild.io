@@ -5,7 +5,7 @@ const getEnvValue = (value: string | undefined, fallback: string): string => {
 };
 
 export const siteSettings = {
-  headerLabel: getEnvValue(import.meta.env.SITE_HEADER_LABEL, 'Craft Guild'),
+  headerLabel: getEnvValue(import.meta.env.SITE_HEADER_LABEL, 'CraftGuild'),
   footerLabel: getEnvValue(import.meta.env.SITE_FOOTER_LABEL, 'progressiveworks.co'),
   footerUrl: getEnvValue(import.meta.env.SITE_FOOTER_URL, 'https://progressiveworks.co'),
 } as const;

@@ -1,6 +1,6 @@
 # craftguild.io
 
-craftguild.io is a small Astro site that lists public open source repositories from the Craft Guild GitHub organization.
+craftguild.io is a small Astro site that lists public open source repositories from the CraftGuild GitHub organization.
 
 Repository cards are built from GitHub data, including repository descriptions, topics, stars, annotated tags, and dominant language icons. The site is designed for deployment on Vercel with server-side rendering, a small in-memory cache, and a cron endpoint for refreshing GitHub repository data.
 
@@ -37,7 +37,7 @@ All variables are optional unless noted.
 ```env
 GITHUB_ORGS=craftguild
 GITHUB_TOKEN=
-SITE_HEADER_LABEL=Craft Guild
+SITE_HEADER_LABEL=CraftGuild
 SITE_FOOTER_LABEL=progressiveworks.co
 SITE_FOOTER_URL=https://progressiveworks.co
 CRON_SECRET=
@@ -45,7 +45,7 @@ CRON_SECRET=
 
 - `GITHUB_ORGS`: Comma-separated GitHub organizations to list. Defaults to `craftguild`.
 - `GITHUB_TOKEN`: Optional GitHub token for higher API rate limits.
-- `SITE_HEADER_LABEL`: Header and page title label. Defaults to `Craft Guild`.
+- `SITE_HEADER_LABEL`: Header and page title label. Defaults to `CraftGuild`.
 - `SITE_FOOTER_LABEL`: Footer link label. Defaults to `progressiveworks.co`.
 - `SITE_FOOTER_URL`: Footer link URL. Defaults to `https://progressiveworks.co`.
 - `CRON_SECRET`: Required to authorize the Vercel cron cache refresh endpoint.
